@@ -1,6 +1,9 @@
 <template>
   <div class="close-button-container" @click="closeWindow">
-    <img src="https://stylishreader.oss-cn-beijing.aliyuncs.com/cancel.png" alt="" />
+    <img
+      src="https://stylishreader.oss-cn-beijing.aliyuncs.com/cancel.png"
+      alt=""
+    />
   </div>
   <div
     style="
@@ -141,6 +144,7 @@ function initializeVideo() {
 }
 
 function closeWindow() {
+  player.value.pause();
   sendMessageToContentScript({ type: "close-popup", message: "" });
 }
 
