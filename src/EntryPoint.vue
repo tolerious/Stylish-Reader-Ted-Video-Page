@@ -46,8 +46,8 @@
       "
     >
       <div style="text-align: center">
-        <p>Today, we have a topic about how to learn English</p>
-        <p>今天我们有一个如何学习英语的话题</p>
+        <p>{{ enTranscript[0]?.text }}</p>
+        <p>-----------------</p>
       </div>
     </div>
     <div
@@ -93,34 +93,14 @@
         overflow-y: auto;
       "
     >
-      <div style="color: rgba(255, 255, 255, 0.8)">
-        <div style="margin-bottom: 20px; color: #ffc862">
-          <span style="display: inline-block; margin-bottom: 10px"
-            >Today, we have a topic about how to learn English, we will
-            recommend some tools for you.</span
-          >
-          <span style="display: inline-block"
-            >我们今天将要学习如何学习英语</span
-          >
+      <div
+        style="color: rgba(255, 255, 255, 0.8)"
+        v-for="trans in enTranscript"
+      >
+        <div style="margin-bottom: 20px; color: rgba(255, 255, 255, 0.8)">
+          <span style="display: block">{{ trans.text }} </span>
+          <!-- <span style="display: block">我们今天将要学习如何学习英语</span> -->
         </div>
-      </div>
-      <div style="color: rgba(255, 255, 255, 0.8)">
-        <div style="margin-bottom: 20px">
-          <span style="display: inline-block; margin-bottom: 10px"
-            >Today, we have a topic about how to learn English, we will
-            recommend some tools for you.</span
-          >
-          <span style="display: inline-block"
-            >我们今天将要学习如何学习英语</span
-          >
-        </div>
-      </div>
-      <div>
-        <p>
-          Today, we have a topic about how to learn English, we will recommend
-          some tools for you.
-        </p>
-        <p>我们今天将要学习如何学习英语</p>
       </div>
     </div>
   </div>
@@ -128,13 +108,15 @@
 
 <script setup>
 import Plyr from "plyr";
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 
 const videoUrl = ref("");
 
 const player = ref(null);
 
 const transcriptList = new Map();
+
+const enTranscript = ref([]);
 
 function initializeVideo() {
   player.value = new Plyr("#player", {
@@ -177,7 +159,9 @@ function eventListenerFromContent() {
     // console.log(detail);
     switch (detail.type) {
       case "update-video-source":
-        if (!video.value && video.value !== detail.videoUrl) {
+        console.log(detail.videoUrl, video.value);
+        if (!video.value || video.value !== detail.videoUrl) {
+          console.log("set video url...");
           video.value = detail.videoUrl;
           player.value.source = {
             type: "video",
@@ -200,6 +184,9 @@ function eventListenerFromContent() {
           detail.data.code,
           JSON.parse(JSON.parse(detail.data.data))
         );
+        if (detail.data.code === "en") {
+          enTranscript.value = transcriptList.get("en");
+        }
         break;
       case "languages":
         // do something
