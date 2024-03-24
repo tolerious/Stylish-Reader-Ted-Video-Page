@@ -150,30 +150,49 @@ function closeWindow() {
 
 function eventListenerFromContent() {
   document.addEventListener("fromContentScript", (event) => {
-    console.log(event);
+    const detail = JSON.parse(event.detail);
+    console.log(detail);
+    switch (detail.type) {
+      case "update-video-source":
+        if (!video.value && video.value !== detail.videoUrl) {
+          video.value = detail.videoUrl;
+          player.value.source = {
+            type: "video",
+            title: "Powered by Stylish Reader",
+            poster:
+              "https://stylishreader.oss-cn-beijing.aliyuncs.com/cover-with-enjoy-text.jpg",
+            sources: [
+              {
+                src: video.value,
+                type: "video/mp4",
+                // size: 720,
+              },
+            ],
+          };
+        }
+
+        break;
+      case "languages":
+        // do something
+        console.log(detail.supportedLanguages);
+        break;
+      default:
+        break;
+    }
   });
 }
 
 function sendMessageToContentScript(message) {
-  const event = new CustomEvent("fromInjectScript", { detail: message });
+  const event = new CustomEvent("fromInjectScript", {
+    detail: JSON.stringify(message),
+  });
   document.dispatchEvent(event);
 }
 
 onMounted(() => {
   initializeVideo();
   eventListenerFromContent();
-  player.value.source = {
-    type: "video",
-    title: "Example title",
-    poster: "https://stylishreader.oss-cn-beijing.aliyuncs.com/cover.JPG",
-    sources: [
-      {
-        src: "https://download.ted.com/products/177106.mp4?apikey=acme-roadrunner",
-        type: "video/mp4",
-        // size: 720,
-      },
-    ],
-  };
+  console.log(`Vue show time:${new Date().getTime()}`);
 });
 </script>
 
