@@ -1,4 +1,7 @@
 <template>
+  <div class="close-button-container" @click="closeWindow">
+    <img src="https://stylishreader.oss-cn-beijing.aliyuncs.com/cancel.png" alt="" />
+  </div>
   <div
     style="
       height: 100%;
@@ -24,11 +27,8 @@
         flex: 1;
       "
     >
-      <video id="player" playsinline controls style="">
-        <source
-          src="https://download.ted.com/products/177106.mp4?apikey=acme-roadrunner"
-          type="video/mp4"
-        />
+      <video id="player" playsinline controls style="width: 100%">
+        <source :src="videoUrl" type="video/mp4" />
       </video>
     </div>
     <div
@@ -103,11 +103,15 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from "vue";
-import plyrSvg from "./assets/plyr.svg";
+import Plyr from "plyr";
+import { onMounted, ref } from "vue";
+
+const videoUrl = ref("");
+
+const player = ref(null);
 
 function initializeVideo() {
-  const player = new Plyr("#player", {
+  player.value = new Plyr("#player", {
     title: "123",
     // debug: true,
     controls: [
@@ -131,18 +135,55 @@ function initializeVideo() {
     // loadSprite: false,
     // iconUrl: 'https://stylishreader.oss-cn-beijing.aliyuncs.com/plyr.svg',
   });
+  player.value.on("loadeddata", (event) => {
+    console.log("stylish custom video loaded...");
+  });
 }
 
-const svgBase64 = computed(() => btoa(plyrSvg));
+function closeWindow() {
+  sendMessageToContentScript({ type: "close-popup", message: "" });
+}
 
-const svgDataUrl = computed(
-  () => `data:image/svg+xml;base64,${svgBase64.value}`
-);
+function eventListenerFromContent() {
+  document.addEventListener("fromContentScript", (event) => {
+    console.log(event);
+  });
+}
+
+function sendMessageToContentScript(message) {
+  const event = new CustomEvent("fromInjectScript", { detail: message });
+  document.dispatchEvent(event);
+}
+
 onMounted(() => {
-  console.log(plyrSvg);
-  const svgBase64 = btoa(plyrSvg);
   initializeVideo();
+  eventListenerFromContent();
+  player.value.source = {
+    type: "video",
+    title: "Example title",
+    poster: "https://stylishreader.oss-cn-beijing.aliyuncs.com/cover.JPG",
+    sources: [
+      {
+        src: "https://download.ted.com/products/177106.mp4?apikey=acme-roadrunner",
+        type: "video/mp4",
+        // size: 720,
+      },
+    ],
+  };
 });
 </script>
 
-<style scoped></style>
+<style scoped>
+.close-button-container {
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  z-index: 99999999;
+  height: 20px;
+  width: 20px;
+  cursor: pointer;
+  img {
+    height: 100%;
+  }
+}
+</style>
