@@ -56,9 +56,30 @@
         background-color: #0f0f0f;
         grid-area: left-bottom;
         color: white;
+        display: grid;
+        grid-template-columns: 70% 30%;
+        grid-template-rows: 1fr;
+        align-items: center;
       "
     >
-      left-bottom
+      <div style="padding: 0 5px; box-sizing: border-box; font-size: 14px">
+        <span>Stay Hungry Stay Foolish... </span>
+      </div>
+      <div
+        style="
+          display: flex;
+          flex-direction: row;
+          justify-content: space-between;
+          padding: 0 5px;
+          font-size: 14px;
+          box-sizing: border-box;
+          color: rgba(255, 255, 255, 0.8);
+        "
+      >
+        <span style="cursor: pointer">Contact</span>
+        <span style="cursor: pointer; color: #ffc862">Reward Me</span>
+        <span style="cursor: pointer">Feature Request</span>
+      </div>
     </div>
     <div
       id="stylish-reader-popup-right-container"
@@ -113,6 +134,8 @@ const videoUrl = ref("");
 
 const player = ref(null);
 
+const transcriptList = new Map();
+
 function initializeVideo() {
   player.value = new Plyr("#player", {
     title: "123",
@@ -151,7 +174,7 @@ function closeWindow() {
 function eventListenerFromContent() {
   document.addEventListener("fromContentScript", (event) => {
     const detail = JSON.parse(event.detail);
-    console.log(detail);
+    // console.log(detail);
     switch (detail.type) {
       case "update-video-source":
         if (!video.value && video.value !== detail.videoUrl) {
@@ -171,6 +194,12 @@ function eventListenerFromContent() {
           };
         }
 
+        break;
+      case "webvtt":
+        transcriptList.set(
+          detail.data.code,
+          JSON.parse(JSON.parse(detail.data.data))
+        );
         break;
       case "languages":
         // do something
