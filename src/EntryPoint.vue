@@ -6,6 +6,7 @@
     />
   </div>
   <div
+    class="stylish-reader-popup-container"
     style="
       height: 100%;
       width: 100%;
@@ -13,9 +14,9 @@
       top: 0;
       background-color: #eeeeee;
       display: grid;
-      grid-template-columns: 1fr 25%;
+      grid-template-columns: 1fr 25% 25%;
       grid-template-rows: auto 280px 50px;
-      grid-template-areas: 'left-top right-bar' 'left-middle right-bar' 'left-bottom right-bar';
+      grid-template-areas: 'left-top right-bar right-right-bar' 'left-middle right-bar right-right-bar' 'left-bottom right-bar right-right-bar';
     "
   >
     <div
@@ -27,8 +28,12 @@
         padding: 20px;
         box-sizing: border-box;
         display: flex;
+        flex-direction: row;
+        justify-content: center;
         flex: 1;
+        text-align: center;
       "
+      class="video-container"
     >
       <video id="player" playsinline controls style="width: 100%">
         <source :src="videoUrl" type="video/mp4" />
@@ -46,8 +51,8 @@
       "
     >
       <div style="text-align: center">
-        <p>{{ enTranscript[0]?.text }}</p>
-        <p>-----------------</p>
+        <p>{{ currentEnTranslation.text }}</p>
+        <p>{{ currentZhTranslation.text }}</p>
       </div>
     </div>
     <div
@@ -76,13 +81,14 @@
           color: rgba(255, 255, 255, 0.8);
         "
       >
-        <span style="cursor: pointer">Contact</span>
-        <span style="cursor: pointer; color: #ffc862">Reward Me</span>
-        <span style="cursor: pointer">Feature Request</span>
+        <span style="cursor: pointer">联系我</span>
+        <span style="cursor: pointer; color: #ffc862">赞助我</span>
+        <span style="cursor: pointer">需求提交</span>
       </div>
     </div>
     <div
       id="stylish-reader-popup-right-container"
+      class="stylish-reader-popup-container"
       style="
         border-left: 1px solid rgba(255, 255, 255, 0.2);
         color: rgba(255, 255, 255, 0.8);
@@ -97,9 +103,57 @@
         style="color: rgba(255, 255, 255, 0.8)"
         v-for="trans in enTranscript"
       >
-        <div style="margin-bottom: 20px; color: rgba(255, 255, 255, 0.8)">
+        <div
+          style="margin-bottom: 20px"
+          class="not-highlight"
+          :class="{ highlight: timeInRange(trans.start, trans.end) }"
+        >
           <span style="display: block">{{ trans.text }} </span>
-          <!-- <span style="display: block">我们今天将要学习如何学习英语</span> -->
+        </div>
+      </div>
+    </div>
+    <div
+      class="stylish-reader-popup-container"
+      style="
+        border-left: 1px solid rgba(255, 255, 255, 0.2);
+        color: rgba(255, 255, 255, 0.8);
+        background-color: #0f0f0f;
+        grid-area: right-right-bar;
+        padding: 20px;
+        box-sizing: border-box;
+        overflow-y: auto;
+      "
+    >
+      <div
+        style="color: rgba(255, 255, 255, 0.8)"
+        v-for="trans in zhTranscript"
+      >
+        <div
+          style="margin-bottom: 20px"
+          class="not-highlight"
+          :class="{ 'highlight-right': timeInRange(trans.start, trans.end) }"
+        >
+          <span style="display: block">
+            {{ trans.text }}
+          </span>
+        </div>
+      </div>
+      <div v-if="!hasZhTranslation">
+        <span style="display: block">
+          该视频尚未翻译，机器翻译正在开发中。<span
+            style="font-style: italic"
+          ></span
+          >...
+        </span>
+        <div>
+          <span
+            style="
+              text-decoration: underline;
+              font-style: italic;
+              cursor: pointer;
+            "
+            >赞助我，加速开发！</span
+          >
         </div>
       </div>
     </div>
@@ -108,20 +162,72 @@
 
 <script setup>
 import Plyr from "plyr";
-import { computed, onMounted, ref } from "vue";
+import { onMounted, ref } from "vue";
 
 const videoUrl = ref("");
 
 const player = ref(null);
 
-const transcriptList = new Map();
-
 const enTranscript = ref([]);
+
+const zhTranscript = ref([]);
+
+const currentTime = ref(0);
+
+const currentEnTranslation = ref({});
+
+const currentZhTranslation = ref({});
+
+const hasZhTranslation = ref(false);
+
+function timeStringToSeconds(timeString) {
+  const parts = timeString.split(":").map((part) => parseFloat(part));
+  return parts[0] * 3600 + parts[1] * 60 + parts[2];
+}
+
+function timeInRange(start, end) {
+  const startSeconds = timeStringToSeconds(start);
+  const endSeconds = timeStringToSeconds(end);
+  return currentTime.value >= startSeconds && currentTime.value <= endSeconds;
+}
+
+function getCurrentTranslation() {
+  enTranscript.value.forEach((item) => {
+    if (timeInRange(item.start, item.end)) {
+      currentEnTranslation.value = item;
+    }
+  });
+  zhTranscript.value.forEach((item) => {
+    if (timeInRange(item.start, item.end)) {
+      currentZhTranslation.value = item;
+    }
+  });
+}
+
+function scrollElement() {
+  const element = document.querySelector(".highlight");
+  if (element) {
+    element.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+      inline: "nearest",
+    });
+  }
+  const elementCopy = document.querySelector(".highlight-right");
+  if (elementCopy) {
+    elementCopy.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+      inline: "nearest",
+    });
+  }
+}
 
 function initializeVideo() {
   player.value = new Plyr("#player", {
     title: "123",
     // debug: true,
+    autoplay: true,
     controls: [
       "play-large",
       "play",
@@ -145,6 +251,15 @@ function initializeVideo() {
   });
   player.value.on("loadeddata", (event) => {
     console.log("stylish custom video loaded...");
+  });
+  player.value.on("canplay", (event) => {
+    console.log("canplay");
+  });
+  player.value.on("timeupdate", (event) => {
+    // console.log(player.value.currentTime);
+    currentTime.value = player.value.currentTime;
+    getCurrentTranslation();
+    scrollElement();
   });
 }
 
@@ -180,17 +295,21 @@ function eventListenerFromContent() {
 
         break;
       case "webvtt":
-        transcriptList.set(
-          detail.data.code,
-          JSON.parse(JSON.parse(detail.data.data))
+        zhTranscript.value = JSON.parse(
+          JSON.parse(JSON.parse(detail.data).zh.data)
         );
-        if (detail.data.code === "en") {
-          enTranscript.value = transcriptList.get("en");
+        enTranscript.value = JSON.parse(
+          JSON.parse(JSON.parse(detail.data).en.data)
+        );
+        console.log(enTranscript.value);
+        console.log(zhTranscript.value);
+        console.log(enTranscript.value.length);
+        console.log(zhTranscript.value.length);
+        if (zhTranscript.value.length > 0) {
+          hasZhTranslation.value = true;
         }
         break;
       case "languages":
-        // do something
-        console.log(detail.supportedLanguages);
         break;
       default:
         break;
@@ -208,7 +327,16 @@ function sendMessageToContentScript(message) {
 onMounted(() => {
   initializeVideo();
   eventListenerFromContent();
-  console.log(`Vue show time:${new Date().getTime()}`);
+  console.log(`Vue show time:${new Date().getTime().toLocaleString()}`);
+  setInterval(() => {
+    // console.log(zhTranscript.value);
+    // console.log(enTranscript.value);
+    // console.log(loopTranscript.value);
+    // console.log(zhDic.value);
+    // console.log(enDic.value);
+    //   console.log(`loopTranscript: ${loopTranscript.value}`);
+    console.log(hasZhTranslation.value);
+  }, 1500);
 });
 </script>
 
@@ -224,5 +352,26 @@ onMounted(() => {
   img {
     height: 100%;
   }
+}
+.video-container {
+  position: relative;
+  img {
+    bottom: 0;
+    margin: auto;
+  }
+}
+
+.not-highlight {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.highlight,
+.highlight-right {
+  color: #ffc862;
+}
+
+.stylish-reader-popup-container {
+  scrollbar-color: rgba(255, 255, 255, 0.8) #0f0f0f;
+  scrollbar-width: thin;
 }
 </style>
