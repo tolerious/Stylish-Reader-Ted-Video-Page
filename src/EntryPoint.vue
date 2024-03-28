@@ -81,8 +81,10 @@
           color: rgba(255, 255, 255, 0.8);
         "
       >
-        <span style="cursor: pointer">联系我</span>
-        <span style="cursor: pointer; color: #ffc862">赞助我</span>
+        <span style="cursor: pointer" @click="contactMeBa">联系我</span>
+        <span style="cursor: pointer; color: #ffc862" @click="rewardMeBa"
+          >赞助我</span
+        >
         <span style="cursor: pointer">需求提交</span>
       </div>
     </div>
@@ -113,6 +115,7 @@
       </div>
     </div>
     <div
+      id="stylish-reader-popup-right-right-container"
       class="stylish-reader-popup-container"
       style="
         border-left: 1px solid rgba(255, 255, 255, 0.2);
@@ -147,6 +150,7 @@
         </span>
         <div>
           <span
+            @click="rewardMeBa"
             style="
               text-decoration: underline;
               font-style: italic;
@@ -158,15 +162,23 @@
       </div>
     </div>
   </div>
+  <reward-me v-if="showRewardMe" @reward="handleCancelReward"></reward-me>
+  <contact-me v-if="showContactMe" @contact="handleCancelContact"></contact-me>
 </template>
 
 <script setup>
 import Plyr from "plyr";
 import { onMounted, ref } from "vue";
+import ContactMe from "./components/ContactMe.vue";
+import RewardMe from "./components/RewardMe.vue";
 
 const videoUrl = ref("");
 
 const player = ref(null);
+
+const showRewardMe = ref(false);
+
+const showContactMe = ref(false);
 
 const enTranscript = ref([]);
 
@@ -179,6 +191,21 @@ const currentEnTranslation = ref({});
 const currentZhTranslation = ref({});
 
 const hasZhTranslation = ref(false);
+
+function rewardMeBa() {
+  showRewardMe.value = true;
+}
+
+function contactMeBa() {
+  showContactMe.value = true;
+}
+
+function handleCancelContact() {
+  showContactMe.value = false;
+}
+function handleCancelReward() {
+  showRewardMe.value = false;
+}
 
 function timeStringToSeconds(timeString) {
   const parts = timeString.split(":").map((part) => parseFloat(part));
@@ -250,10 +277,10 @@ function initializeVideo() {
     // iconUrl: 'https://stylishreader.oss-cn-beijing.aliyuncs.com/plyr.svg',
   });
   player.value.on("loadeddata", (event) => {
-    console.log("stylish custom video loaded...");
+    // console.log("stylish custom video loaded...");
   });
   player.value.on("canplay", (event) => {
-    console.log("canplay");
+    // console.log("canplay");
   });
   player.value.on("timeupdate", (event) => {
     // console.log(player.value.currentTime);
@@ -274,9 +301,9 @@ function eventListenerFromContent() {
     // console.log(detail);
     switch (detail.type) {
       case "update-video-source":
-        console.log(detail.videoUrl, video.value);
+        // console.log(detail.videoUrl, video.value);
         if (!video.value || video.value !== detail.videoUrl) {
-          console.log("set video url...");
+          // console.log("set video url...");
           video.value = detail.videoUrl;
           player.value.source = {
             type: "video",
@@ -301,10 +328,10 @@ function eventListenerFromContent() {
         enTranscript.value = JSON.parse(
           JSON.parse(JSON.parse(detail.data).en.data)
         );
-        console.log(enTranscript.value);
-        console.log(zhTranscript.value);
-        console.log(enTranscript.value.length);
-        console.log(zhTranscript.value.length);
+        // console.log(enTranscript.value);
+        // console.log(zhTranscript.value);
+        // console.log(enTranscript.value.length);
+        // console.log(zhTranscript.value.length);
         if (zhTranscript.value.length > 0) {
           hasZhTranslation.value = true;
         }
@@ -327,16 +354,17 @@ function sendMessageToContentScript(message) {
 onMounted(() => {
   initializeVideo();
   eventListenerFromContent();
-  console.log(`Vue show time:${new Date().getTime().toLocaleString()}`);
-  setInterval(() => {
-    // console.log(zhTranscript.value);
-    // console.log(enTranscript.value);
-    // console.log(loopTranscript.value);
-    // console.log(zhDic.value);
-    // console.log(enDic.value);
-    //   console.log(`loopTranscript: ${loopTranscript.value}`);
-    console.log(hasZhTranslation.value);
-  }, 1500);
+
+  // console.log(`Vue show time:${new Date().getTime().toLocaleString()}`);
+  // setInterval(() => {
+  // console.log(zhTranscript.value);
+  // console.log(enTranscript.value);
+  // console.log(loopTranscript.value);
+  // console.log(zhDic.value);
+  // console.log(enDic.value);
+  //   console.log(`loopTranscript: ${loopTranscript.value}`);
+  // console.log(hasZhTranslation.value);
+  // }, 1500);
 });
 </script>
 
