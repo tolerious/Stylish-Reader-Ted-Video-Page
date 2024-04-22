@@ -141,7 +141,7 @@
           </span>
         </div>
       </div>
-      <div v-if="!hasZhTranslation">
+      <div v-if="zhTranscript.length === 0">
         <span style="display: block">
           该视频尚未翻译，机器翻译正在开发中。<span
             style="font-style: italic"
@@ -298,13 +298,11 @@ function closeWindow() {
 function eventListenerFromContent() {
   document.addEventListener("fromContentScript", (event) => {
     const detail = JSON.parse(event.detail);
-    // console.log(detail);
     switch (detail.type) {
-      case "update-video-source":
-        // console.log(detail.videoUrl, video.value);
-        if (!video.value || video.value !== detail.videoUrl) {
-          // console.log("set video url...");
-          video.value = detail.videoUrl;
+      case "prepare":
+        const sharedLink = detail.data.sharedLink;
+        if (!video.value || video.value !== sharedLink) {
+          video.value = sharedLink;
           player.value.source = {
             type: "video",
             title: "Powered by Stylish Reader",
@@ -320,23 +318,15 @@ function eventListenerFromContent() {
           };
         }
 
-        break;
-      case "webvtt":
-        zhTranscript.value = JSON.parse(
-          JSON.parse(JSON.parse(detail.data).zh.data)
-        );
-        enTranscript.value = JSON.parse(
-          JSON.parse(JSON.parse(detail.data).en.data)
-        );
-        // console.log(enTranscript.value);
-        // console.log(zhTranscript.value);
-        // console.log(enTranscript.value.length);
-        // console.log(zhTranscript.value.length);
-        if (zhTranscript.value.length > 0) {
-          hasZhTranslation.value = true;
-        }
-        break;
-      case "languages":
+        const transcript = detail.data.transcript;
+        transcript.forEach((t) => {
+          if (t.code === "en") {
+            enTranscript.value = JSON.parse(t.data);
+          }
+          if (t.code === "zh-cn") {
+            zhTranscript.value = JSON.parse(t.data);
+          }
+        });
         break;
       default:
         break;
@@ -354,17 +344,6 @@ function sendMessageToContentScript(message) {
 onMounted(() => {
   initializeVideo();
   eventListenerFromContent();
-
-  // console.log(`Vue show time:${new Date().getTime().toLocaleString()}`);
-  // setInterval(() => {
-  // console.log(zhTranscript.value);
-  // console.log(enTranscript.value);
-  // console.log(loopTranscript.value);
-  // console.log(zhDic.value);
-  // console.log(enDic.value);
-  //   console.log(`loopTranscript: ${loopTranscript.value}`);
-  // console.log(hasZhTranslation.value);
-  // }, 1500);
 });
 </script>
 
