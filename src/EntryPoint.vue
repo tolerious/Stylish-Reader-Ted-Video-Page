@@ -171,6 +171,7 @@ import Plyr from "plyr";
 import { onMounted, ref } from "vue";
 import ContactMe from "./components/ContactMe.vue";
 import RewardMe from "./components/RewardMe.vue";
+import { logger } from "./utils";
 
 const videoUrl = ref("");
 
@@ -298,7 +299,11 @@ function closeWindow() {
 function eventListenerFromContent() {
   document.addEventListener("fromContentScript", (event) => {
     const detail = JSON.parse(event.detail);
+    currentEnTranslation.value = {};
+    currentZhTranslation.value = {};
     switch (detail.type) {
+      case "cleanup":
+        break;
       case "prepare":
         const sharedLink = detail.data.sharedLink;
         if (!video.value || video.value !== sharedLink) {
@@ -342,8 +347,11 @@ function sendMessageToContentScript(message) {
 }
 
 onMounted(() => {
+  logger(`Video Page Mounted.`);
   initializeVideo();
   eventListenerFromContent();
+  currentEnTranslation.value = {};
+  currentZhTranslation.value = {};
 });
 </script>
 
