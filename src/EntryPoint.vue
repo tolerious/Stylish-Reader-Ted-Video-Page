@@ -301,6 +301,9 @@ function eventListenerFromContent() {
     const detail = JSON.parse(event.detail);
     currentEnTranslation.value = {};
     currentZhTranslation.value = {};
+    video.value = "";
+    enTranscript.value = [];
+    zhTranscript.value = [];
     switch (detail.type) {
       case "cleanup":
         break;
